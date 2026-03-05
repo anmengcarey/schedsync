@@ -19,7 +19,7 @@ export function Onboarding() {
   const navigate = useNavigate()
   const { connectCalendar, disconnectCalendar, getConnections } = useAvailability()
   const [connections, setConnections] = useState<CalendarConnection[]>([])
-  const [loading, setLoading] = useState(false)
+  const [_loading, _setLoading] = useState(false)
 
   useEffect(() => {
     if (profile) {
@@ -27,7 +27,7 @@ export function Onboarding() {
     }
   }, [profile, getConnections])
 
-  async function handleConnect(provider: Provider, icsIntervals?: BusyInterval[]) {
+  async function handleConnect(provider: Provider, _icsIntervals?: BusyInterval[]) {
     if (!profile) return
     try {
       const conn = await connectCalendar(profile.id, provider, WINDOW_START, WINDOW_END)

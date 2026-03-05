@@ -24,7 +24,7 @@ export function AvailabilityMap({
   participants,
   busyIntervals,
   suggestedSlots = [],
-  durationMinutes = 60,
+  durationMinutes: _durationMinutes = 60,
 }: AvailabilityMapProps) {
   const days = useMemo(() => {
     const all = eachDayOfInterval({ start: parseISO(windowStart), end: parseISO(windowEnd) })

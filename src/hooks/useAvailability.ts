@@ -36,18 +36,21 @@ export function useAvailability() {
         connected_at: new Date().toISOString(),
       }
 
-      // Generate mock busy intervals for this user
-      const intervals = generateMockBusyIntervals(userId, windowStart, windowEnd)
+      // Generate mock busy intervals for this connection
+      const intervals = generateMockBusyIntervals(userId, windowStart, windowEnd, connection.id)
 
       if (isDemoMode()) {
         const allConnections = localGet<CalendarConnection>(CONNECTIONS_KEY)
-        // Replace existing connection for same provider
+        // Find and replace existing connection for same provider, clearing its intervals
+        const existingConn = allConnections.find((c) => c.user_id === userId && c.provider === provider)
         const filtered = allConnections.filter((c) => !(c.user_id === userId && c.provider === provider))
         localSet(CONNECTIONS_KEY, [...filtered, connection])
 
         const allIntervals = localGet<BusyInterval>(BUSY_KEY)
-        // Clear old mock intervals for this user/provider
-        const keptIntervals = allIntervals.filter((i) => !(i.user_id === userId && i.source === 'mock'))
+        // Clear intervals only for this specific connection (not other providers)
+        const keptIntervals = allIntervals.filter(
+          (i) => !(i.user_id === userId && i.calendar_connection_id === existingConn?.id)
+        )
         localSet(BUSY_KEY, [...keptIntervals, ...intervals])
       } else {
         await supabase.from('calendar_connections').upsert(connection)
