@@ -5,11 +5,22 @@ import { ProviderPicker } from '@/components/ProviderPicker'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { CalendarConnection, Provider } from '@/types'
 import { BusyInterval } from '@/types'
 import { format, addWeeks } from 'date-fns'
 import { Loader2, Save, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
+
+const US_TIMEZONES = [
+  { value: 'America/New_York', label: 'Eastern Time (ET) — New York, Boston' },
+  { value: 'America/Chicago', label: 'Central Time (CT) — Chicago, Dallas' },
+  { value: 'America/Denver', label: 'Mountain Time (MT) — Denver, Salt Lake City' },
+  { value: 'America/Phoenix', label: 'Mountain Time, no DST (MT) — Phoenix' },
+  { value: 'America/Los_Angeles', label: 'Pacific Time (PT) — Los Angeles, Seattle' },
+  { value: 'America/Anchorage', label: 'Alaska Time (AKT) — Anchorage' },
+  { value: 'Pacific/Honolulu', label: 'Hawaii Time (HST) — Honolulu' },
+]
 
 const WINDOW_START = format(new Date(), 'yyyy-MM-dd')
 const WINDOW_END = format(addWeeks(new Date(), 8), 'yyyy-MM-dd')
@@ -82,15 +93,20 @@ export function Settings() {
           </div>
           <div>
             <Label htmlFor="tz">Timezone</Label>
-            <Input
-              id="tz"
-              value={timezone}
-              onChange={(e) => setTimezone(e.target.value)}
-              className="mt-1"
-              placeholder="America/New_York"
-            />
+            <Select value={timezone} onValueChange={setTimezone}>
+              <SelectTrigger id="tz" className="mt-1">
+                <SelectValue placeholder="Select a timezone" />
+              </SelectTrigger>
+              <SelectContent>
+                {US_TIMEZONES.map((tz) => (
+                  <SelectItem key={tz.value} value={tz.value}>
+                    {tz.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <p className="text-xs text-gray-400 mt-1">
-              Current: {Intl.DateTimeFormat().resolvedOptions().timeZone}
+              Detected: {Intl.DateTimeFormat().resolvedOptions().timeZone}
             </p>
           </div>
           <Button

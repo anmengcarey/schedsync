@@ -3,34 +3,38 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { useSchedulingRequest } from '@/hooks/useSchedulingRequest'
 import { useAvailability } from '@/hooks/useAvailability'
-import { SchedulingRequest, CalendarConnection } from '@/types'
+import { SchedulingRequest, CalendarConnection, BusyInterval } from '@/types'
 import { RequestStatusBadge } from '@/components/StatusBadge'
 import { Button } from '@/components/ui/button'
-import { Plus, CalendarDays, Clock, Users, LinkIcon, AlertCircle } from 'lucide-react'
+import { MyCalendarView } from '@/components/MyCalendarView'
+import { Plus, CalendarDays, Clock, LinkIcon, AlertCircle } from 'lucide-react'
 import { format, parseISO } from 'date-fns'
-import { cn } from '@/lib/utils'
 
 export function Dashboard() {
   const { profile } = useAuth()
   const { getUserRequests } = useSchedulingRequest()
-  const { getConnections } = useAvailability()
+  const { getConnections, getUserBusyIntervals } = useAvailability()
   const navigate = useNavigate()
 
   const [requests, setRequests] = useState<SchedulingRequest[]>([])
   const [connections, setConnections] = useState<CalendarConnection[]>([])
+  const [busyIntervals, setBusyIntervals] = useState<BusyInterval[]>([])
   const [loading, setLoading] = useState(true)
+  const [activeTab, setActiveTab] = useState<'requests' | 'calendar'>('requests')
 
   useEffect(() => {
     if (!profile) return
     Promise.all([
       getUserRequests(profile.id),
       getConnections(profile.id),
-    ]).then(([reqs, conns]) => {
+      getUserBusyIntervals(profile.id),
+    ]).then(([reqs, conns, intervals]) => {
       setRequests(reqs)
       setConnections(conns)
+      setBusyIntervals(intervals)
       setLoading(false)
     })
-  }, [profile, getUserRequests, getConnections])
+  }, [profile, getUserRequests, getConnections, getUserBusyIntervals])
 
   const hasCalendar = connections.some((c) => c.status === 'connected')
 
@@ -45,7 +49,7 @@ export function Dashboard() {
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
             Welcome back, {profile?.name.split(' ')[0]}
@@ -79,7 +83,7 @@ export function Dashboard() {
 
       {/* Connected calendars pill */}
       {hasCalendar && (
-        <div className="flex items-center gap-2 mb-6 flex-wrap">
+        <div className="flex items-center gap-2 mb-4 flex-wrap">
           <span className="text-xs text-gray-500">Connected:</span>
           {connections
             .filter((c) => c.status === 'connected')
@@ -97,18 +101,50 @@ export function Dashboard() {
         </div>
       )}
 
-      {/* Requests list */}
-      {requests.length === 0 ? (
-        <EmptyState onNew={() => navigate('/create')} />
+      {/* Tab toggle */}
+      <div className="flex gap-1 mb-6 border-b border-gray-200">
+        <button
+          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+            activeTab === 'requests'
+              ? 'border-teal-600 text-teal-700'
+              : 'border-transparent text-gray-500 hover:text-gray-700'
+          }`}
+          onClick={() => setActiveTab('requests')}
+        >
+          Requests
+        </button>
+        {hasCalendar && (
+          <button
+            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === 'calendar'
+                ? 'border-teal-600 text-teal-700'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+            onClick={() => setActiveTab('calendar')}
+          >
+            My Calendar
+          </button>
+        )}
+      </div>
+
+      {/* Tab content */}
+      {activeTab === 'calendar' && hasCalendar ? (
+        <MyCalendarView connections={connections} busyIntervals={busyIntervals} />
       ) : (
-        <div className="space-y-3">
-          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
-            Your requests
-          </h2>
-          {requests.map((req) => (
-            <RequestCard key={req.id} request={req} userId={profile?.id || ''} />
-          ))}
-        </div>
+        <>
+          {requests.length === 0 ? (
+            <EmptyState onNew={() => navigate('/create')} />
+          ) : (
+            <div className="space-y-3">
+              <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
+                Your requests
+              </h2>
+              {requests.map((req) => (
+                <RequestCard key={req.id} request={req} userId={profile?.id || ''} />
+              ))}
+            </div>
+          )}
+        </>
       )}
     </div>
   )

@@ -5,7 +5,6 @@ import { Provider, CalendarConnection } from '@/types'
 import { PrivacyBadge } from '@/components/PrivacyBadge'
 import { cn } from '@/lib/utils'
 import { parseICSFile } from '@/lib/mockDataGenerator'
-import { generateId } from '@/lib/utils'
 import { BusyInterval } from '@/types'
 
 interface ProviderOption {

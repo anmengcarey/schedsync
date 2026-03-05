@@ -7,7 +7,6 @@ import {
   setMinutes,
   isBefore,
   isAfter,
-  startOfDay,
   addWeeks,
   format,
 } from 'date-fns'
@@ -27,7 +26,7 @@ interface ParticipantIntervals {
 export function computeSuggestedSlots(
   request: SchedulingRequest,
   participantData: ParticipantIntervals[],
-  existingSlotId?: string
+  _existingSlotId?: string
 ): SuggestedSlot[] {
   const windowStart = parseISO(request.window_start)
   const windowEnd = parseISO(request.window_end)
@@ -171,7 +170,7 @@ function computeScore(slotStart: Date, conflictCount: number, dayStartH: number,
   return score
 }
 
-function deduplicateSlots(slots: SuggestedSlot[], duration: number): SuggestedSlot[] {
+function deduplicateSlots(slots: SuggestedSlot[], _duration: number): SuggestedSlot[] {
   const result: SuggestedSlot[] = []
   const usedBlocks = new Set<string>()
 

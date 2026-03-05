@@ -5,7 +5,7 @@ import { useSchedulingRequest } from '@/hooks/useSchedulingRequest'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { getBrowserTimezone, generateId } from '@/lib/utils'
+import { getBrowserTimezone } from '@/lib/utils'
 import { X, Plus, Loader2, ArrowLeft } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
@@ -27,7 +27,7 @@ export function CreateRequest() {
   const [windowEnd, setWindowEnd] = useState(twoWeeks)
   const [hoursStart, setHoursStart] = useState('09:00')
   const [hoursEnd, setHoursEnd] = useState('18:00')
-  const [timezone, setTimezone] = useState(getBrowserTimezone())
+  const [timezone] = useState(getBrowserTimezone())
   const [type, setType] = useState<'one_off' | 'recurring'>('one_off')
   const [recurrenceWeeks, setRecurrenceWeeks] = useState(4)
   const [conflictK, setConflictK] = useState(1)

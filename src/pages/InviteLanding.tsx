@@ -7,7 +7,7 @@ import { SchedulingRequest, Provider } from '@/types'
 import { CalendarConnection } from '@/types'
 import { ProviderPicker } from '@/components/ProviderPicker'
 import { Button } from '@/components/ui/button'
-import { CalendarDays, Clock, Users, CheckCircle2, Loader2 } from 'lucide-react'
+import { CalendarDays, Clock, CheckCircle2, Loader2 } from 'lucide-react'
 import { format, parseISO } from 'date-fns'
 import { toast } from 'sonner'
 

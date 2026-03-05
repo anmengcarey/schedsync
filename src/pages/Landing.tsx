@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { CalendarDays, Clock, Shield, Zap, Users, ArrowRight } from 'lucide-react'
+import { CalendarDays, Clock, Shield, Zap, ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 const features = [
