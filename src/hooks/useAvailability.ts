@@ -67,9 +67,11 @@ export function useAvailability() {
   const disconnectCalendar = useCallback(async (userId: string, provider: Provider): Promise<void> => {
     if (isDemoMode()) {
       const all = localGet<CalendarConnection>(CONNECTIONS_KEY)
+      const conn = all.find((c) => c.user_id === userId && c.provider === provider)
       localSet(CONNECTIONS_KEY, all.filter((c) => !(c.user_id === userId && c.provider === provider)))
       const intervals = localGet<BusyInterval>(BUSY_KEY)
-      localSet(BUSY_KEY, intervals.filter((i) => i.user_id !== userId))
+      // Only clear intervals for this specific connection, not other providers
+      localSet(BUSY_KEY, intervals.filter((i) => !(i.user_id === userId && i.calendar_connection_id === conn?.id)))
       return
     }
     await supabase.from('calendar_connections').delete().match({ user_id: userId, provider })

@@ -67,8 +67,9 @@ export function generateMockBusyIntervals(
   windowEnd: string,
   connectionId?: string
 ): BusyInterval[] {
-  const seed = userId.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0)
-  const rand = seededRandom(seed)
+  const seedStr = userId + (connectionId || '')
+  const seed = seedStr.split('').reduce((acc, c, i) => (acc + c.charCodeAt(0) * (i + 1)) | 0, 0)
+  const rand = seededRandom(Math.abs(seed))
 
   const start = parseISO(windowStart)
   const end = parseISO(windowEnd)
