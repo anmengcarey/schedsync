@@ -7,12 +7,12 @@ import { SchedulingRequest, CalendarConnection, BusyInterval } from '@/types'
 import { RequestStatusBadge } from '@/components/StatusBadge'
 import { Button } from '@/components/ui/button'
 import { MyCalendarView } from '@/components/MyCalendarView'
-import { Plus, CalendarDays, Clock, LinkIcon, AlertCircle } from 'lucide-react'
+import { Plus, CalendarDays, Clock, LinkIcon, AlertCircle, XCircle } from 'lucide-react'
 import { format, parseISO } from 'date-fns'
 
 export function Dashboard() {
   const { profile } = useAuth()
-  const { getUserRequests } = useSchedulingRequest()
+  const { getUserRequests, updateRequestStatus } = useSchedulingRequest()
   const { getConnections, getUserBusyIntervals } = useAvailability()
   const navigate = useNavigate()
 
@@ -140,7 +140,16 @@ export function Dashboard() {
                 Your requests
               </h2>
               {requests.map((req) => (
-                <RequestCard key={req.id} request={req} userId={profile?.id || ''} />
+                <RequestCard
+                  key={req.id}
+                  request={req}
+                  userId={profile?.id || ''}
+                  onCancel={async () => {
+                    if (!window.confirm(`Cancel "${req.title}"? This cannot be undone.`)) return
+                    await updateRequestStatus(req.id, 'cancelled')
+                    setRequests((prev) => prev.map((r) => r.id === req.id ? { ...r, status: 'cancelled' } : r))
+                  }}
+                />
               ))}
             </div>
           )}
@@ -150,7 +159,7 @@ export function Dashboard() {
   )
 }
 
-function RequestCard({ request, userId }: { request: SchedulingRequest; userId: string }) {
+function RequestCard({ request, userId, onCancel }: { request: SchedulingRequest; userId: string; onCancel: () => void }) {
   const navigate = useNavigate()
   const isOrganizer = request.organizer_id === userId
   const inviteUrl = `${window.location.origin}/invite/${request.share_token}`
@@ -197,20 +206,36 @@ function RequestCard({ request, userId }: { request: SchedulingRequest; userId: 
           </div>
         </div>
 
-        {/* Share link (organizer only) */}
-        {isOrganizer && request.status === 'active' && (
-          <button
-            className="flex items-center gap-1.5 text-xs text-teal-600 hover:text-teal-700 border border-teal-200 rounded-lg px-3 py-1.5 hover:bg-teal-50 transition-colors flex-shrink-0"
-            onClick={(e) => {
-              e.stopPropagation()
-              navigator.clipboard.writeText(inviteUrl)
-                .then(() => alert('Invite link copied!'))
-                .catch(() => {})
-            }}
-          >
-            <LinkIcon className="w-3.5 h-3.5" />
-            Copy invite link
-          </button>
+        {/* Action buttons (organizer only) */}
+        {isOrganizer && (
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {request.status === 'active' && (
+              <button
+                className="flex items-center gap-1.5 text-xs text-teal-600 hover:text-teal-700 border border-teal-200 rounded-lg px-3 py-1.5 hover:bg-teal-50 transition-colors"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  navigator.clipboard.writeText(inviteUrl)
+                    .then(() => alert('Invite link copied!'))
+                    .catch(() => {})
+                }}
+              >
+                <LinkIcon className="w-3.5 h-3.5" />
+                Copy invite link
+              </button>
+            )}
+            {request.status !== 'cancelled' && (
+              <button
+                className="flex items-center gap-1.5 text-xs text-red-500 hover:text-red-600 border border-red-200 rounded-lg px-3 py-1.5 hover:bg-red-50 transition-colors"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onCancel()
+                }}
+              >
+                <XCircle className="w-3.5 h-3.5" />
+                Cancel
+              </button>
+            )}
+          </div>
         )}
       </div>
 
