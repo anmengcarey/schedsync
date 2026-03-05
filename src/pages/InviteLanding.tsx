@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useParams, useNavigate, Link } from 'react-router-dom'
+import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { useSchedulingRequest } from '@/hooks/useSchedulingRequest'
 import { useAvailability } from '@/hooks/useAvailability'
@@ -13,6 +13,7 @@ import { toast } from 'sonner'
 
 export function InviteLanding() {
   const { shareToken } = useParams<{ shareToken: string }>()
+  const [searchParams] = useSearchParams()
   const { user, profile } = useAuth()
   const { getRequestByToken, getParticipants, updateParticipantStatus, addParticipant } = useSchedulingRequest()
   const { connectCalendar, disconnectCalendar, getConnections } = useAvailability()
@@ -27,7 +28,20 @@ export function InviteLanding() {
   useEffect(() => {
     if (!shareToken) return
     getRequestByToken(shareToken).then((req) => {
-      setRequest(req)
+      if (req) {
+        setRequest(req)
+      } else {
+        // Fallback: decode request data from URL param (for cross-browser sharing in demo mode)
+        const d = searchParams.get('d')
+        if (d) {
+          try {
+            const decoded = JSON.parse(decodeURIComponent(escape(atob(d))))
+            setRequest(decoded)
+          } catch {
+            setRequest(null)
+          }
+        }
+      }
       setLoading(false)
     })
   }, [shareToken, getRequestByToken])
