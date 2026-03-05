@@ -162,7 +162,9 @@ export function Dashboard() {
 function RequestCard({ request, userId, onCancel }: { request: SchedulingRequest; userId: string; onCancel: () => void }) {
   const navigate = useNavigate()
   const isOrganizer = request.organizer_id === userId
-  const inviteUrl = `${window.location.origin}/invite/${request.share_token}`
+  // Encode request data in URL so recipients can view invite even without a shared database
+  const encodedData = btoa(unescape(encodeURIComponent(JSON.stringify(request))))
+  const inviteUrl = `${window.location.origin}/invite/${request.share_token}?d=${encodedData}`
 
   const statusToPath: Record<string, string> = {
     active: `/request/${request.id}/results`,
