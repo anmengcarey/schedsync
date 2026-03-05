@@ -1,5 +1,7 @@
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { MeetingEvent, SchedulingRequest, RequestParticipant, SuggestedSlot } from '@/types'
+import { useSchedulingRequest } from '@/hooks/useSchedulingRequest'
 import { Button } from '@/components/ui/button'
 import { downloadICS, generateInviteText } from '@/lib/icsGenerator'
 import { format, parseISO } from 'date-fns'
@@ -13,25 +15,87 @@ import {
   Users,
   RepeatIcon,
   LayoutDashboard,
+  Loader2,
 } from 'lucide-react'
 import { toast } from 'sonner'
 
 export function Success() {
   const location = useLocation()
   const navigate = useNavigate()
+  const { requestId } = useParams<{ requestId: string }>()
+  const { getRequest, getParticipants, getMeetingEvent } = useSchedulingRequest()
 
-  const { event, request, participants, slot } = (location.state || {}) as {
-    event: MeetingEvent
-    request: SchedulingRequest
-    participants: RequestParticipant[]
-    slot: SuggestedSlot
+  const stateData = (location.state || {}) as {
+    event?: MeetingEvent
+    request?: SchedulingRequest
+    participants?: RequestParticipant[]
+    slot?: SuggestedSlot
+  }
+
+  const [event, setEvent] = useState<MeetingEvent | null>(stateData.event ?? null)
+  const [request, setRequest] = useState<SchedulingRequest | null>(stateData.request ?? null)
+  const [participants, setParticipants] = useState<RequestParticipant[]>(stateData.participants ?? [])
+  const [slot] = useState<SuggestedSlot | undefined>(stateData.slot)
+  const [loading, setLoading] = useState(!stateData.event && !!requestId)
+
+  // If no state was passed (e.g. navigated from Dashboard), load from storage
+  useEffect(() => {
+    if (stateData.event || !requestId) return
+    Promise.all([
+      getRequest(requestId),
+      getParticipants(requestId),
+      getMeetingEvent(requestId),
+    ]).then(([req, parts, evt]) => {
+      setRequest(req)
+      setParticipants(parts)
+      setEvent(evt)
+      setLoading(false)
+    })
+  }, [requestId])
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-teal-600" />
+      </div>
+    )
+  }
+
+  // Confirmed request exists but no meeting event was ever created
+  if (!event && request) {
+    return (
+      <div className="max-w-xl mx-auto px-4 py-12 text-center">
+        <div className="w-16 h-16 bg-teal-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <CheckCircle2 className="w-9 h-9 text-teal-600" />
+        </div>
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">{request.title}</h1>
+        <p className="text-gray-500 text-sm mb-1">
+          {format(parseISO(request.window_start), 'MMM d')} — {format(parseISO(request.window_end), 'MMM d, yyyy')}
+        </p>
+        <p className="text-gray-400 text-sm mb-6">{formatDuration(request.duration_minutes)} · {participants.length} participants</p>
+        <p className="text-gray-400 text-sm mb-6">
+          No confirmed time slot yet. Go to Results to pick one.
+        </p>
+        <div className="flex gap-3 justify-center">
+          <Button
+            className="bg-teal-600 hover:bg-teal-700 text-white"
+            onClick={() => navigate(`/request/${request.id}/results`)}
+          >
+            View Results
+          </Button>
+          <Button variant="outline" onClick={() => navigate('/dashboard')}>
+            Dashboard
+          </Button>
+        </div>
+      </div>
+    )
   }
 
   if (!event || !request) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <p className="text-gray-500 mb-4">No meeting data found.</p>
+          <p className="text-gray-500 mb-4">Meeting not found.</p>
           <Button onClick={() => navigate('/dashboard')}>Go to Dashboard</Button>
         </div>
       </div>
@@ -42,12 +106,12 @@ export function Success() {
   const end = parseISO(event.end_time)
 
   function handleDownloadICS() {
-    downloadICS(event, participants)
+    downloadICS(event!, participants)
     toast.success('.ics file downloaded')
   }
 
   function handleCopyInvite() {
-    const text = generateInviteText(event, participants)
+    const text = generateInviteText(event!, participants)
     navigator.clipboard.writeText(text)
       .then(() => toast.success('Invite text copied to clipboard'))
       .catch(() => toast.error('Could not copy — please copy manually'))
@@ -127,7 +191,7 @@ export function Success() {
         </div>
 
         {/* Near-miss note */}
-        {slot?.conflict_count > 0 && (
+        {slot && slot.conflict_count > 0 && (
           <div className="mt-4 bg-yellow-50 border border-yellow-200 rounded-lg px-3 py-2">
             <p className="text-xs text-yellow-700">
               Note: {slot.conflicted_names?.join(', ')} {slot.conflict_count === 1 ? 'has' : 'have'} a conflict at this time.
