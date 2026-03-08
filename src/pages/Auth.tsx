@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { CalendarDays, Loader2 } from 'lucide-react'
+import { CalendarDays, Loader2, Mail } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 
@@ -14,6 +14,7 @@ export function Auth() {
   const [password, setPassword] = useState('')
   const [name, setName] = useState('')
   const [loading, setLoading] = useState(false)
+  const [emailSent, setEmailSent] = useState(false)
   const { signIn, signUp } = useAuth()
   const navigate = useNavigate()
 
@@ -33,8 +34,9 @@ export function Auth() {
         setLoading(false)
         return
       }
-      toast.success('Account created!')
-      navigate('/onboarding')
+      setEmailSent(true)
+      setLoading(false)
+      return
     } else {
       const { error } = await signIn(email, password)
       if (error) {
@@ -46,6 +48,28 @@ export function Auth() {
     }
 
     setLoading(false)
+  }
+
+  if (emailSent) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center px-4">
+        <div className="w-full max-w-md text-center">
+          <div className="w-16 h-16 bg-teal-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
+            <Mail className="w-8 h-8 text-teal-600" />
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Check your email</h1>
+          <p className="text-gray-500 text-sm mb-2">
+            We sent a confirmation link to <strong>{email}</strong>.
+          </p>
+          <p className="text-gray-400 text-xs mb-8">
+            Click the link in the email to activate your account. Check your spam folder if you don't see it.
+          </p>
+          <Button variant="outline" onClick={() => { setEmailSent(false); setTab('signin') }}>
+            Back to sign in
+          </Button>
+        </div>
+      </div>
+    )
   }
 
   return (

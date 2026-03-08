@@ -14,8 +14,9 @@ import { Confirm } from '@/pages/Confirm'
 import { Success } from '@/pages/Success'
 import { ManualAvailability } from '@/pages/ManualAvailability'
 import { Settings } from '@/pages/Settings'
+import { AuthConfirmed } from '@/pages/AuthConfirmed'
 
-const HIDE_NAVBAR = ['/', '/auth']
+const HIDE_NAVBAR = ['/', '/auth', '/auth/confirmed']
 
 function AppShell() {
   const location = useLocation()
@@ -27,6 +28,7 @@ function AppShell() {
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/auth" element={<Auth />} />
+        <Route path="/auth/confirmed" element={<AuthConfirmed />} />
         <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         <Route path="/create" element={<ProtectedRoute><CreateRequest /></ProtectedRoute>} />
