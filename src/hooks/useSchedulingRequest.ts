@@ -84,12 +84,26 @@ export function useSchedulingRequest() {
       return all.filter((r) => r.organizer_id === userId || myParticipantRequestIds.includes(r.id))
         .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
     }
-    const { data } = await supabase
+    const { data: ownRequests } = await supabase
       .from('scheduling_requests')
       .select('*')
-      .or(`organizer_id.eq.${userId}`)
-      .order('created_at', { ascending: false })
-    return data || []
+      .eq('organizer_id', userId)
+    const { data: participantRows } = await supabase
+      .from('request_participants')
+      .select('request_id')
+      .eq('user_id', userId)
+    const participantRequestIds = (participantRows || []).map((p) => p.request_id)
+    let invitedRequests: SchedulingRequest[] = []
+    if (participantRequestIds.length > 0) {
+      const { data } = await supabase
+        .from('scheduling_requests')
+        .select('*')
+        .in('id', participantRequestIds)
+        .neq('organizer_id', userId)
+      invitedRequests = data || []
+    }
+    const all = [...(ownRequests || []), ...invitedRequests]
+    return all.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
   }, [])
 
   const updateRequestStatus = useCallback(async (id: string, status: SchedulingRequest['status']): Promise<void> => {

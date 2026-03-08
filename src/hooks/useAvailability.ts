@@ -53,8 +53,17 @@ export function useAvailability() {
         )
         localSet(BUSY_KEY, [...keptIntervals, ...intervals])
       } else {
-        await supabase.from('calendar_connections').upsert(connection)
-        await supabase.from('busy_intervals').delete().match({ user_id: userId, source: 'mock' })
+        // Get existing connection for this provider to clear only its intervals
+        const { data: existingConn } = await supabase
+          .from('calendar_connections')
+          .select('id')
+          .match({ user_id: userId, provider })
+          .maybeSingle()
+        if (existingConn) {
+          await supabase.from('busy_intervals').delete().eq('calendar_connection_id', existingConn.id)
+          await supabase.from('calendar_connections').delete().match({ user_id: userId, provider })
+        }
+        await supabase.from('calendar_connections').insert(connection)
         await supabase.from('busy_intervals').insert(intervals)
       }
 
