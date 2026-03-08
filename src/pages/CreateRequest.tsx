@@ -278,7 +278,7 @@ export function CreateRequest() {
                 className={cn('px-4 py-2 rounded-lg text-sm font-medium border transition-all',
                   conflictK === k ? 'bg-teal-600 text-white border-teal-600' : 'bg-white text-gray-600 border-gray-200 hover:border-teal-400'
                 )}>
-                {k === 0 ? 'Everyone must be free' : k === 1 ? '1 conflict OK' : '2 conflicts OK'}
+                {k === 0 ? 'Everyone free' : k === 1 ? '≤1 conflict' : '≤2 conflicts'}
               </button>
             ))}
           </div>
@@ -287,7 +287,7 @@ export function CreateRequest() {
         {/* Participants */}
         <div>
           <Label>Participants (email)</Label>
-          <p className="text-xs text-gray-500 mb-2">They'll receive a link to connect their calendar</p>
+          <p className="text-xs text-gray-500 mb-2">You'll get an invite link to share with them after creating the request</p>
           <div className="space-y-2">
             {emails.map((email, i) => (
               <div key={i} className="flex gap-2">
