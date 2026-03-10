@@ -87,7 +87,7 @@ export function InviteLanding() {
         status: 'availability_submitted',
       })
     } else {
-      await updateParticipantStatus(me.id, 'availability_submitted')
+      await updateParticipantStatus(me.id, 'availability_submitted', profile.id)
     }
 
     setSubmitted(true)

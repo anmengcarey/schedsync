@@ -138,13 +138,17 @@ export function useSchedulingRequest() {
     return data || []
   }, [])
 
-  const updateParticipantStatus = useCallback(async (participantId: string, status: RequestParticipant['status']): Promise<void> => {
+  const updateParticipantStatus = useCallback(async (participantId: string, status: RequestParticipant['status'], userId?: string): Promise<void> => {
     if (isDemoMode()) {
       const all = localGet<RequestParticipant>(PARTICIPANTS_KEY)
-      localSet(PARTICIPANTS_KEY, all.map((p) => p.id === participantId ? { ...p, status, responded_at: new Date().toISOString() } : p))
+      localSet(PARTICIPANTS_KEY, all.map((p) => p.id === participantId ? {
+        ...p, status, responded_at: new Date().toISOString(), ...(userId && { user_id: userId })
+      } : p))
       return
     }
-    await supabase.from('request_participants').update({ status, responded_at: new Date().toISOString() }).eq('id', participantId)
+    const updates: Record<string, unknown> = { status, responded_at: new Date().toISOString() }
+    if (userId) updates.user_id = userId
+    await supabase.from('request_participants').update(updates).eq('id', participantId)
   }, [])
 
   const saveSuggestedSlots = useCallback(async (slots: SuggestedSlot[]): Promise<void> => {
